@@ -1,0 +1,11 @@
+# Ignorar tudo por padrão
+*
+
+# Permitir apenas o próprio .gitignore
+!.gitignore
+
+# Permitir arquivos com extensão .ipynb
+!*.ipynb
+
+# Permitir arquivos .ipynb em subdiretórios
+!**/*.ipynb
