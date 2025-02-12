@@ -1,11 +1,9 @@
 # Ignorar tudo por padrão
-*
+/*
 
-# Permitir apenas o próprio .gitignore
-!.gitignore
-
-# Permitir arquivos com extensão .ipynb
+# Não ignorar arquivos .ipynb
 !*.ipynb
 
-# Permitir arquivos .ipynb em subdiretórios
-!**/*.ipynb
+# Não ignorar a pasta datasets e suas subpastas
+!datasets/
+!datasets/**/
