@@ -1,37 +1,40 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 
 class ClinicalData(BaseModel):
-    Age: int
-    Gender: str
-    Ethnicity: str
-    EducationLevel: str
-    BMI: float
-    Smoking: str
-    AlcoholConsumption: str
-    PhysicalActivity: str
-    DietQuality: str
-    SleepQuality: str
-    FamilyHistoryAlzheimers: str
-    CardiovascularDisease: str
-    Diabetes: str
-    Depression: str
-    HeadInjury: str
-    Hypertension: str
-    SystolicBP: int
-    DiastolicBP: int
-    CholesterolTotal: int
-    CholesterolLDL: int
-    CholesterolHDL: int
-    CholesterolTriglycerides: int
-    MMSE: float
-    FunctionalAssessment: str
-    MemoryComplaints: str
-    BehavioralProblems: str
-    ADL: str
-    Confusion: str
-    Disorientation: str
-    PersonalityChanges: str
-    DifficultyCompletingTasks: str
-    Forgetfulness: str
-    Diagnosis: str
-    DoctorInCharge: str
+    Age: Optional[int] = Field(None)
+    Gender: Optional[int] = Field(None)
+    Ethnicity: Optional[int] = Field(None)
+    EducationLevel: Optional[int] = Field(None)
+    BMI: Optional[float] = Field(None)
+    Smoking: Optional[int] = Field(None)
+    AlcoholConsumption: Optional[float] = Field(None)
+    PhysicalActivity: Optional[float] = Field(None)
+    DietQuality: Optional[float] = Field(None)
+    SleepQuality: Optional[float] = Field(None)
+    FamilyHistoryAlzheimers: Optional[int] = Field(None)
+    CardiovascularDisease: Optional[int] = Field(None)
+    Diabetes: Optional[int] = Field(None)
+    Depression: Optional[int] = Field(None)
+    HeadInjury: Optional[int] = Field(None)
+    Hypertension: Optional[int] = Field(None)
+    SystolicBP: Optional[int] = Field(None)
+    DiastolicBP: Optional[int] = Field(None)
+    CholesterolTotal: Optional[float] = Field(None)
+    CholesterolLDL: Optional[float] = Field(None)
+    CholesterolHDL: Optional[float] = Field(None)
+    CholesterolTriglycerides: Optional[float] = Field(None)
+    FunctionalAssessment: Optional[float] = Field(None)
+    MemoryComplaints: Optional[int] = Field(None)
+    BehavioralProblems: Optional[int] = Field(None)
+    ADL: Optional[float] = Field(None)
+    Confusion: Optional[int] = Field(None)
+    Disorientation: Optional[int] = Field(None)
+    PersonalityChanges: Optional[int] = Field(None)
+    DifficultyCompletingTasks: Optional[int] = Field(None)
+    Forgetfulness: Optional[int] = Field(None)
+
+    # Propriedades que **não podem ser passadas** na requisição
+    MMSE: Optional[float] = Field(None, exclude=True)
+    Diagnosis: Optional[int] = Field(None, exclude=True)
+    DoctorInCharge: Optional[str] = Field(None, exclude=True)

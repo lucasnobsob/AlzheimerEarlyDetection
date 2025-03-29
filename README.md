@@ -1,81 +1,105 @@
-# Alzheimer Diagnosis API
+Aqui está a atualização do seu **README** com todas as instruções necessárias:  
 
-Esta API utiliza modelos de aprendizado de máquina para diagnosticar Alzheimer com base em imagens de ressonância magnética e dados clínicos.
+---
 
-## 🚀 Como Executar com Docker
+# **Alzheimer Early Detection API** 🧠  
 
-### 1️⃣ **Construir a Imagem Docker**
-Execute o seguinte comando no terminal, dentro da pasta do projeto:
+Esta API utiliza um modelo de Deep Learning para detecção precoce de Alzheimer a partir de imagens de ressonância magnética e dados clínicos.  
 
-```bash
+## **1. Instalação das Dependências**  
+
+Antes de executar a aplicação, instale as bibliotecas necessárias:  
+
+```sh
+pip install pandas torch scikit-learn joblib matplotlib opencv-python fastapi Pillow torchvision
+```
+
+---
+
+## **2. Criando e Executando o Container Docker**  
+
+### **2.1. Criar a Imagem Docker**  
+
+Navegue até o diretório onde está o `Dockerfile` e execute:  
+
+```sh
 docker build -t alzheimer-api .
 ```
 
-### 2️⃣ **Executar o Contêiner**
-Após a construção da imagem, rode o contêiner com:
+### **2.2. Rodar o Container**  
 
-```bash
+Após a criação da imagem, execute o seguinte comando para rodar a API na porta 8000:  
+
+```sh
 docker run -p 8000:8000 alzheimer-api
 ```
 
-A API estará acessível em `http://localhost:8000`.
+Se precisar rodar o container em segundo plano (modo **detached**), use:  
 
-### 3️⃣ **Acessar o Contêiner em Modo Interativo (Opcional)**
-Se precisar acessar o terminal do contêiner:
-
-```bash
-docker run -it --rm -p 8000:8000 alzheimer-api bash
+```sh
+docker run -d -p 8000:8000 alzheimer-api
 ```
 
-### 4️⃣ **Garantir Persistência da Pasta `datasets`**
-Caso queira garantir que a pasta `datasets` persista mesmo após a remoção do contêiner:
+---
 
-```bash
-docker run -p 8000:8000 -v $(pwd)/datasets:/app/datasets alzheimer-api
+## **3. Publicando no Docker Hub**  
+
+### **3.1. Login no Docker Hub**  
+
+Antes de publicar a imagem no Docker Hub, faça login:  
+
+```sh
+docker login
 ```
 
-## 📂 Estrutura do Projeto
-```
-/project-root
-│── datasets/              # Dados para treino e teste
-│── models/                # Modelos treinados
-│── main.py                # Código principal da API FastAPI
-│── AlzheimerCNN.py        # Modelo de CNN para diagnóstico
-│── ClinicalData.py        # Processamento de dados clínicos
-│── gradcam_utils.py       # Implementação do Grad-CAM
-│── requirements.txt       # Dependências do projeto
-│── Dockerfile             # Configuração do Docker
-│── README.md              # Instruções do projeto
+### **3.2. Criar uma Tag para a Imagem**  
+
+Substitua `SEU_USUARIO` pelo seu nome de usuário do Docker Hub:  
+
+```sh
+docker tag alzheimer-api SEU_USUARIO/alzheimer-api:v1
 ```
 
-## 📜 **Dockerfile**
-O arquivo `Dockerfile` está configurado da seguinte maneira:
+### **3.3. Enviar a Imagem para o Docker Hub**  
 
-```dockerfile
-# Usar uma imagem oficial do Python
-FROM python:3.10
-
-# Definir o diretório de trabalho
-WORKDIR /app
-
-# Copiar arquivos do projeto para o contêiner
-COPY . /app
-
-# Instalar as dependências
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Expor a porta da API
-EXPOSE 8000
-
-# Comando para rodar a API
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```sh
+docker push SEU_USUARIO/alzheimer-api:v1
 ```
 
-## 🛠 **Requisitos**
-- Docker instalado
-- Pasta `datasets/` disponível para armazenamento dos dados
+Agora a imagem estará disponível no Docker Hub e poderá ser executada em qualquer máquina.  
 
-## 📬 **Contato**
-Caso tenha dúvidas, sinta-se à vontade para entrar em contato!
+---
 
+## **4. Rodando a API Localmente com Docker**  
+
+Caso tenha baixado a imagem do Docker Hub, execute:  
+
+```sh
+docker run -p 8000:8000 SEU_USUARIO/alzheimer-api:v1
+```
+
+Se precisar visualizar os logs:  
+
+```sh
+docker logs -f <CONTAINER_ID>
+```
+
+---
+
+## **5. Testando a API no Postman**  
+
+### **5.1. Importar a Collection do Postman**  
+
+1. Abra o **Postman**.  
+2. Vá até **File > Import**.  
+3. Selecione o arquivo `AlzheimerEarlyDetection.postman_collection`.  
+4. Agora os endpoints estarão disponíveis para teste.  
+
+### **5.2. Testar um Endpoint**  
+
+- **URL da API**: `http://localhost:8000`  
+- **Exemplo de requisição para prever diagnóstico (usando dados clínicos):**  
+  - Endpoint: `POST /predict_clinical_data`  
+  - Enviar os dados necessários no **body** da requisição (JSON).  
+
+Se precisar de mais ajustes, só avisar! 🚀
