@@ -1,8 +1,9 @@
+#pip install pandas torch scikit-learn joblib matplotlib opencv-python fastapi Pillow torchvision
+
 import base64
 import cv2
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile
 from typing import List
-from fastapi.responses import JSONResponse
 import torch
 from torchvision import transforms
 from PIL import Image
@@ -25,7 +26,7 @@ scaler.mean_ = np.array([60, 12, 2, 27, 0.5, 1500, 0.7, 1.2, 5])
 scaler.scale_ = np.array([10, 3, 1, 2, 0.5, 300, 0.1, 0.2, 2])
 
 model_mri = AlzheimerCNN()
-model = torch.load("alzheimer_mri_model.pth", map_location=torch.device("cpu"))
+model = torch.load("alzheimer_mri_model.pth", map_location=torch.device("cpu")) #cuda
 model_mri.load_state_dict(model["model_state"])
 
 class_to_idx = model["class_to_idx"]
@@ -75,7 +76,7 @@ async def predict_clinical_data(data: List[dict]):
         label_encoder = LabelEncoder()
         df["Gender"] = label_encoder.fit_transform(df["Gender"])
 
-        features = df.drop(columns=["PatientID", "Diagnosis", "DoctorInCharge"])
+        features = df.drop(columns=["PatientID", "Diagnosis", "DoctorInCharge", "MMSE"])
         features = scaler_csv.transform(features)
         prediction = model_csv.predict(features)[0]
 
@@ -90,32 +91,6 @@ async def predict_clinical_data(data: List[dict]):
         results.append({"PatientID": record["PatientID"], "PredictedDiagnosis": diagnosis})
 
     return results
-
-
-@app.post("/predict/heat_map")
-async def predict(file: UploadFile = File(...)):
-    # Lê a imagem enviada
-    image_bytes = await file.read()
-
-    # Pré-processa a imagem
-    image_tensor = gradcam.preprocess_image(image_bytes)
-
-    # Gera o mapa de calor e a classe predita
-    overlayed_image, predicted_class, predicted_probability = gradcam.create_heatmap_and_class(image_tensor)
-
-    # Codifica a imagem com o mapa de calor para base64
-    _, img_encoded = cv2.imencode('.jpg', overlayed_image)
-    img_bytes = img_encoded.tobytes()
-    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-
-    # Gera o JSON com as probabilidades da classe
-    response = {
-        "predicted_class": predicted_class,
-        "predicted_probability": predicted_probability,
-        "heatmap_image": f"data:image/jpeg;base64,{img_base64}" 
-    }
-
-    return JSONResponse(content=response)
 
 
 if __name__ == "__main__":
