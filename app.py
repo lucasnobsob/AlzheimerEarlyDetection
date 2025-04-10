@@ -1,8 +1,5 @@
-import base64
-import cv2
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile
 from typing import List
-from fastapi.responses import JSONResponse
 import torch
 from torchvision import transforms
 from PIL import Image
@@ -12,9 +9,6 @@ import pandas as pd
 import joblib
 from sklearn.preprocessing import StandardScaler
 from AlzheimerCNN import AlzheimerCNN
-from ClinicalData import ClinicalData
-from gradcam_utils import GradCAM
-from sklearn.ensemble import RandomForestClassifier 
 from sklearn.preprocessing import LabelEncoder
 import torch.nn.functional as F
 
@@ -35,7 +29,7 @@ for idx, class_name in class_to_idx.items():
 
 model_mri.eval()
 
-model_csv = joblib.load('alzheimer_csv_model.joblib')
+model_csv = joblib.load('cognitive_impairment_model.pkl')
 scaler_csv = joblib.load('scaler.pkl')
 
 classes = ["MildImpairment", "ModerateImpairment", "NoImpairment", "VeryMildImpairment"]
@@ -43,10 +37,24 @@ classes = ["MildImpairment", "ModerateImpairment", "NoImpairment", "VeryMildImpa
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5], std=[0.5])
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225])
 ])
 
-gradcam = GradCAM(model_mri, model_mri.conv3)
+
+# Carregar o CSV com os dados
+df_mmse = pd.read_csv("D:\\Projetos\\TrabalhoFinalDataScience\\AlzheimerEarlyDetection\\alzheimers_disease_data.csv")
+
+# Função para mapear o MMSE para diagnóstico
+def classify_mmse(mmse):
+    if mmse >= 28:
+        return "No Impairment"
+    elif 24 <= mmse < 28:
+        return "Very Mild Impairment"
+    elif 20 <= mmse < 24:
+        return "Mild Impairment"
+    else:
+        return "Moderate Impairment"
 
 @app.post("/predict")
 async def predict(files: List[UploadFile] = File(...)):
@@ -69,13 +77,24 @@ async def predict(files: List[UploadFile] = File(...)):
 @app.post("/predict_clinical_data")
 async def predict_clinical_data(data: List[dict]):
     results = []
+    total = 0
+    acertos = 0
 
     for record in data:
         df = pd.DataFrame([record])
         label_encoder = LabelEncoder()
         df["Gender"] = label_encoder.fit_transform(df["Gender"])
 
-        features = df.drop(columns=["PatientID", "Diagnosis", "DoctorInCharge"])
+        # Codificar todas as colunas categóricas
+        categorical_cols = df.select_dtypes(include=['object']).columns
+        for col in categorical_cols:
+            if col not in ["PatientID", "Diagnosis", "DoctorInCharge", "MMSE"]:  # Exclua colunas não usadas
+                df[col] = LabelEncoder().fit_transform(df[col])
+                
+        cols_to_drop = ["PatientID", "Diagnosis", "DoctorInCharge", "MMSE"]
+        features = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
+        
+        # Escalonar
         features = scaler_csv.transform(features)
         prediction = model_csv.predict(features)[0]
 
@@ -86,36 +105,42 @@ async def predict_clinical_data(data: List[dict]):
             3: "Very Mild Impairment"
         }
 
-        diagnosis = diagnosis_mapping.get(prediction, "Unknown")
-        results.append({"PatientID": record["PatientID"], "PredictedDiagnosis": diagnosis})
+        predicted_diagnosis = diagnosis_mapping.get(prediction, "Unknown")
 
-    return results
+        # Recuperar MMSE original pelo PatientID
+        try:
+            patient_id = int(record["PatientID"])
+        except (ValueError, TypeError):
+            patient_id = record["PatientID"]
 
+        patient_row = df_mmse[df_mmse["PatientID"] == patient_id]
 
-@app.post("/predict/heat_map")
-async def predict(file: UploadFile = File(...)):
-    # Lê a imagem enviada
-    image_bytes = await file.read()
+        if not patient_row.empty:
+            mmse_value = patient_row.iloc[0]["MMSE"]
+            original_mmse_diagnosis = classify_mmse(mmse_value)
+        else:
+            mmse_value = None
+            original_mmse_diagnosis = "Unknown"
 
-    # Pré-processa a imagem
-    image_tensor = gradcam.preprocess_image(image_bytes)
+        # Contabiliza se houve acerto
+        if predicted_diagnosis == original_mmse_diagnosis and predicted_diagnosis != "Unknown":
+            acertos += 1
+        total += 1
 
-    # Gera o mapa de calor e a classe predita
-    overlayed_image, predicted_class, predicted_probability = gradcam.create_heatmap_and_class(image_tensor)
+        results.append({
+            "PatientID": patient_id,
+            "PredictedDiagnosis": predicted_diagnosis,
+            "OriginalMMSE": original_mmse_diagnosis
+        })
 
-    # Codifica a imagem com o mapa de calor para base64
-    _, img_encoded = cv2.imencode('.jpg', overlayed_image)
-    img_bytes = img_encoded.tobytes()
-    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+    # Calcula acurácia
+    accuracy_percent = round((acertos / total) * 100, 2) if total > 0 else 0.0
 
-    # Gera o JSON com as probabilidades da classe
-    response = {
-        "predicted_class": predicted_class,
-        "predicted_probability": predicted_probability,
-        "heatmap_image": f"data:image/jpeg;base64,{img_base64}" 
+    return {
+        "results": results,
+        "accuracy": f"{accuracy_percent}%"
     }
 
-    return JSONResponse(content=response)
 
 
 if __name__ == "__main__":
