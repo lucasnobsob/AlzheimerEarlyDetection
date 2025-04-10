@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+torch
+torchvision
+pillow
+numpy
+pandas
+opencv-python
+joblib
+scikit-learn
+matplotlib

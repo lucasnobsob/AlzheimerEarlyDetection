@@ -19,7 +19,7 @@ scaler.mean_ = np.array([60, 12, 2, 27, 0.5, 1500, 0.7, 1.2, 5])
 scaler.scale_ = np.array([10, 3, 1, 2, 0.5, 300, 0.1, 0.2, 2])
 
 model_mri = AlzheimerCNN()
-model = torch.load("alzheimer_mri_model.pth", map_location=torch.device("cpu"))
+model = torch.load("alzheimer_mri_model.pth", map_location=torch.device("cpu")) #cuda
 model_mri.load_state_dict(model["model_state"])
 
 class_to_idx = model["class_to_idx"]
