@@ -19,7 +19,7 @@ scaler.mean_ = np.array([60, 12, 2, 27, 0.5, 1500, 0.7, 1.2, 5])
 scaler.scale_ = np.array([10, 3, 1, 2, 0.5, 300, 0.1, 0.2, 2])
 
 model_mri = AlzheimerCNN()
-model = torch.load("alzheimer_mri_model.pth", map_location=torch.device("cpu"))
+model = torch.load("models/alzheimer_mri_model.pth", map_location=torch.device("cpu")) #cuda
 model_mri.load_state_dict(model["model_state"])
 
 class_to_idx = model["class_to_idx"]
@@ -29,8 +29,13 @@ for idx, class_name in class_to_idx.items():
 
 model_mri.eval()
 
-model_csv = joblib.load('cognitive_impairment_model.pkl')
-scaler_csv = joblib.load('scaler.pkl')
+# Carregar os modelos e objetos salvos
+model_csv = joblib.load('models/alzheimer_csv_model.pkl')
+scaler_csv = joblib.load('models/scaler.pkl')
+le = joblib.load('models/label_encoder.pkl')
+selector1 = joblib.load('models/feature_selector1.pkl')
+selector2 = joblib.load('models/feature_selector2.pkl')
+pca = joblib.load('models/pca.pkl')
 
 classes = ["MildImpairment", "ModerateImpairment", "NoImpairment", "VeryMildImpairment"]
 
@@ -77,71 +82,52 @@ async def predict(files: List[UploadFile] = File(...)):
 @app.post("/predict_clinical_data")
 async def predict_clinical_data(data: List[dict]):
     results = []
-    total = 0
-    acertos = 0
-
+    
     for record in data:
-        df = pd.DataFrame([record])
-        label_encoder = LabelEncoder()
-        df["Gender"] = label_encoder.fit_transform(df["Gender"])
-
-        # Codificar todas as colunas categóricas
-        categorical_cols = df.select_dtypes(include=['object']).columns
-        for col in categorical_cols:
-            if col not in ["PatientID", "Diagnosis", "DoctorInCharge", "MMSE"]:  # Exclua colunas não usadas
-                df[col] = LabelEncoder().fit_transform(df[col])
-                
-        cols_to_drop = ["PatientID", "Diagnosis", "DoctorInCharge", "MMSE"]
-        features = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
-        
-        # Escalonar
-        features = scaler_csv.transform(features)
-        prediction = model_csv.predict(features)[0]
-
-        diagnosis_mapping = {
-            0: "No Impairment",
-            1: "Mild Impairment",
-            2: "Moderate Impairment",
-            3: "Very Mild Impairment"
-        }
-
-        predicted_diagnosis = diagnosis_mapping.get(prediction, "Unknown")
-
-        # Recuperar MMSE original pelo PatientID
         try:
-            patient_id = int(record["PatientID"])
-        except (ValueError, TypeError):
-            patient_id = record["PatientID"]
-
-        patient_row = df_mmse[df_mmse["PatientID"] == patient_id]
-
-        if not patient_row.empty:
-            mmse_value = patient_row.iloc[0]["MMSE"]
-            original_mmse_diagnosis = classify_mmse(mmse_value)
-        else:
-            mmse_value = None
-            original_mmse_diagnosis = "Unknown"
-
-        # Contabiliza se houve acerto
-        if predicted_diagnosis == original_mmse_diagnosis and predicted_diagnosis != "Unknown":
-            acertos += 1
-        total += 1
-
-        results.append({
-            "PatientID": patient_id,
-            "PredictedDiagnosis": predicted_diagnosis,
-            "OriginalMMSE": original_mmse_diagnosis
-        })
-
-    # Calcula acurácia
-    accuracy_percent = round((acertos / total) * 100, 2) if total > 0 else 0.0
-
-    return {
-        "results": results,
-        "accuracy": f"{accuracy_percent}%"
-    }
-
-
+            # Criar DataFrame com os dados
+            df = pd.DataFrame([record])
+            
+            # Remover colunas que não serão usadas
+            cols_to_drop = ["PatientID", "Diagnosis", "DoctorInCharge", "MMSE"]
+            features = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
+            
+            # Garantir que os dados são numéricos
+            for col in features.columns:
+                features[col] = pd.to_numeric(features[col], errors='coerce')
+            
+            # Preencher valores NaN com a média da coluna
+            features = features.fillna(features.mean())
+            
+            # Escalonar os dados
+            X_scaled = scaler_csv.transform(features)
+            
+            # Aplicar PCA para reduzir para 15 features
+            X_pca = pca.transform(X_scaled)
+            
+            # Fazer a predição
+            prediction = model_csv.predict(X_pca)[0]
+            probabilities = model_csv.predict_proba(X_pca)[0]
+            
+            # Decodificar a classe predita
+            predicted_class = le.inverse_transform([prediction])[0]
+            
+            # Criar dicionário de probabilidades
+            prob_dict = {le.classes_[i]: f"{prob*100:.2f}%" for i, prob in enumerate(probabilities)}
+            
+            results.append({
+                "PatientID": record.get("PatientID", "Unknown"),
+                "PredictedDiagnosis": predicted_class,
+                "Probabilities": prob_dict
+            })
+            
+        except Exception as e:
+            results.append({
+                "PatientID": record.get("PatientID", "Unknown"),
+                "Error": str(e)
+            })
+    
+    return results
 
 if __name__ == "__main__":
     import uvicorn
