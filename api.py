@@ -45,7 +45,7 @@ class_mapping = {
 # Load the model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = AlzheimerCNN(num_classes=4)
-model.load_state_dict(torch.load('best_model_resolution_invariant.pth', map_location=device))
+model.load_state_dict(torch.load('alzheimer_mri_model.pth', map_location=device))
 model = model.to(device)
 model.eval()
 

@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  alzheimer-api:
+    build: .
+    container_name: alzheimer_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./datasets:/app/datasets
+      - ./alzheimer_mri_model.pth:/app/alzheimer_mri_model.pth
+    environment:
+      - CUDA_VISIBLE_DEVICES=0 # Enable GPU if available
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
