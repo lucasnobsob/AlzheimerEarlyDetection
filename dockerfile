@@ -1,18 +1,24 @@
-# Usar uma imagem oficial do Python
-FROM python:3.10
+FROM python:3.9-slim
 
-# Definir o diretório de trabalho dentro do contêiner
+# Set working directory
 WORKDIR /app
 
-# Copiar os arquivos necessários para o contêiner
-COPY . /app
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar as dependências
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
 
-# Expor a porta da API
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
+COPY . .
+
+# Expose the port the app runs on
 EXPOSE 8000
 
-# Comando para rodar a API
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Command to run the application
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
