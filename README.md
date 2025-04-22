@@ -1,105 +1,96 @@
-Aqui está a atualização do seu **README** com todas as instruções necessárias:  
+# Detecção Precoce de Alzheimer
 
----
+Este projeto tem como objetivo desenvolver um sistema de detecção precoce da doença de Alzheimer utilizando técnicas de aprendizado de máquina e processamento de imagens médicas.
 
-# **Alzheimer Early Detection API** 🧠  
+## Estrutura do Projeto
 
-Esta API utiliza um modelo de Deep Learning para detecção precoce de Alzheimer a partir de imagens de ressonância magnética e dados clínicos.  
-
-## **1. Instalação das Dependências**  
-
-Antes de executar a aplicação, instale as bibliotecas necessárias:  
-
-```sh
-pip install pandas torch scikit-learn joblib matplotlib opencv-python fastapi Pillow torchvision
+```
+AlzheimerEarlyDetection/
+├── data/                    # Dados e imagens médicas
+├── notebooks/               # Jupyter notebooks para análise e experimentação
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_preprocessing.ipynb
+│   ├── 03_feature_engineering.ipynb
+│   ├── 04_model_training.ipynb
+│   ├── 05_model_evaluation.ipynb
+│   └── 06_visualization.ipynb
+├── src/                     # Código fonte do projeto
+│   ├── data/               # Scripts de processamento de dados
+│   ├── models/             # Implementações dos modelos
+│   ├── utils/              # Funções utilitárias
+│   └── visualization/      # Scripts de visualização
+├── tests/                  # Testes unitários
+├── requirements.txt        # Dependências do projeto
+└── README.md              # Este arquivo
 ```
 
----
+## Requisitos
 
-## **2. Criando e Executando o Container Docker**  
+- Python 3.8+
+- Bibliotecas listadas em `requirements.txt`
 
-### **2.1. Criar a Imagem Docker**  
+## Instalação
 
-Navegue até o diretório onde está o `Dockerfile` e execute:  
+1. Clone o repositório:
 
-```sh
-docker build -t alzheimer-api .
+```bash
+git clone [URL_DO_REPOSITÓRIO]
+cd AlzheimerEarlyDetection
 ```
 
-### **2.2. Rodar o Container**  
+2. Crie um ambiente virtual e ative-o:
 
-Após a criação da imagem, execute o seguinte comando para rodar a API na porta 8000:  
-
-```sh
-docker run -p 8000:8000 alzheimer-api
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
 ```
 
-Se precisar rodar o container em segundo plano (modo **detached**), use:  
+3. Instale as dependências:
 
-```sh
-docker run -d -p 8000:8000 alzheimer-api
+```bash
+pip install -r requirements.txt
 ```
 
----
+## Uso
 
-## **3. Publicando no Docker Hub**  
+1. **Exploração de Dados**
 
-### **3.1. Login no Docker Hub**  
+   - Execute o notebook `01_data_exploration.ipynb` para análise inicial dos dados
 
-Antes de publicar a imagem no Docker Hub, faça login:  
+2. **Pré-processamento**
 
-```sh
-docker login
-```
+   - Use `02_preprocessing.ipynb` para preparar os dados
 
-### **3.2. Criar uma Tag para a Imagem**  
+3. **Engenharia de Features**
 
-Substitua `SEU_USUARIO` pelo seu nome de usuário do Docker Hub:  
+   - Execute `03_feature_engineering.ipynb` para extração de características
 
-```sh
-docker tag alzheimer-api SEU_USUARIO/alzheimer-api:v1
-```
+4. **Treinamento do Modelo**
 
-### **3.3. Enviar a Imagem para o Docker Hub**  
+   - Use `04_model_training.ipynb` para treinar os modelos
 
-```sh
-docker push SEU_USUARIO/alzheimer-api:v1
-```
+5. **Avaliação**
 
-Agora a imagem estará disponível no Docker Hub e poderá ser executada em qualquer máquina.  
+   - Execute `05_model_evaluation.ipynb` para avaliar o desempenho
 
----
+6. **Visualização**
+   - Use `06_visualization.ipynb` para gerar visualizações e insights
 
-## **4. Rodando a API Localmente com Docker**  
+## Contribuição
 
-Caso tenha baixado a imagem do Docker Hub, execute:  
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
-```sh
-docker run -p 8000:8000 SEU_USUARIO/alzheimer-api:v1
-```
+## Licença
 
-Se precisar visualizar os logs:  
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-```sh
-docker logs -f <CONTAINER_ID>
-```
+## Contato
 
----
+[Seu Nome] - [seu.email@exemplo.com]
 
-## **5. Testando a API no Postman**  
-
-### **5.1. Importar a Collection do Postman**  
-
-1. Abra o **Postman**.  
-2. Vá até **File > Import**.  
-3. Selecione o arquivo `AlzheimerEarlyDetection.postman_collection`.  
-4. Agora os endpoints estarão disponíveis para teste.  
-
-### **5.2. Testar um Endpoint**  
-
-- **URL da API**: `http://localhost:8000`  
-- **Exemplo de requisição para prever diagnóstico (usando dados clínicos):**  
-  - Endpoint: `POST /predict_clinical_data`  
-  - Enviar os dados necessários no **body** da requisição (JSON).  
-
-Se precisar de mais ajustes, só avisar! 🚀
+Link do Projeto: [https://github.com/seu-usuario/AlzheimerEarlyDetection](https://github.com/seu-usuario/AlzheimerEarlyDetection)
