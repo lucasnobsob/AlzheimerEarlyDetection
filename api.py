@@ -1,23 +1,28 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import pandas as pd
+import numpy as np
+import joblib
+from typing import Dict, List
+import logging
 import torch
 import torch.nn as nn
 from torchvision import transforms
 from PIL import Image
 import io
-import numpy as np
 import uvicorn
-from typing import List
-import os
-
-# Import the model class
 from AlzheimerCNN import AlzheimerCNN
+from PatientData import PatientData
 
-app = FastAPI(title="Alzheimer Detection API",
-             description="API for detecting Alzheimer's disease from MRI images",
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Alzheimer's Disease Prediction API",
+             description="API for predicting Alzheimer's disease stages based on patient data",
              version="1.0.0")
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins
@@ -25,6 +30,8 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
+model_csv = joblib.load('models/RandomForest.joblib')
 
 # Define the same transforms used in training
 transform = transforms.Compose([
@@ -34,20 +41,54 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Class mapping
-class_mapping = {
-    0: "Mild Impairment",
-    1: "Moderate Impairment",
-    2: "No Impairment",
-    3: "Very Mild Impairment"
-}
-
 # Load the model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = AlzheimerCNN(num_classes=4)
 model.load_state_dict(torch.load('alzheimer_mri_model.pth', map_location=device))
 model = model.to(device)
 model.eval()
+
+CLASS_MAPPING = {
+    0: "Sem Demência",
+    1: "Demência Muito Leve",
+    2: "Demência Leve",
+    3: "Demência Moderada"
+}
+
+class PredictionResponse(BaseModel):
+    stage: str
+    probability: float
+    all_probabilities: Dict[str, float]
+
+@app.post("/predict_batch", response_model=List[PredictionResponse])
+async def predict_dementia_batch(patients_data: List[PatientData]):
+    try:
+        logger.info(f"Received batch prediction request for {len(patients_data)} patients")
+        df = pd.DataFrame([patient.dict() for patient in patients_data])
+        
+        predictions = model_csv.predict(df)
+        probabilities = model_csv.predict_proba(df)
+        
+        results = []
+        for i, (pred, probs) in enumerate(zip(predictions, probabilities)):
+            stage_name = CLASS_MAPPING.get(int(pred), "Unknown")
+            stage_probability = probs[np.where(model_csv.classes_ == pred)[0][0]]
+            
+            all_probs = {CLASS_MAPPING.get(int(cls), "Unknown"): float(prob) 
+                        for cls, prob in zip(model_csv.classes_, probs)}
+            
+            results.append({
+                "diagnóstico": stage_name,
+                "probabilidade": float(stage_probability),
+                "todas_as_probabilidades": all_probs
+            })
+        
+        logger.info(f"Batch prediction completed for {len(results)} patients")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Error during batch prediction: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 def preprocess_image(image_bytes):
     try:
@@ -92,11 +133,11 @@ async def predict(file: UploadFile = File(...)):
         
         # Prepare response
         result = {
-            "predicted_class": class_mapping[predicted_class],
+            "predicted_class": CLASS_MAPPING[predicted_class],
             "confidence": f"{float(confidence)*100:.2f}%",
             "probabilities": format_probabilities({
                 class_name: prob for class_name, prob in zip(
-                    class_mapping.values(),
+                    CLASS_MAPPING.values(),
                     probabilities[0].cpu().numpy()
                 )
             })
@@ -130,11 +171,11 @@ async def batch_predict(files: List[UploadFile] = File(...)):
             # Prepare result for this image
             result = {
                 "filename": file.filename,
-                "predicted_class": class_mapping[predicted_class],
+                "predicted_class": CLASS_MAPPING[predicted_class],
                 "confidence": f"{float(confidence)*100:.2f}%",
                 "probabilities": format_probabilities({
                     class_name: prob for class_name, prob in zip(
-                        class_mapping.values(),
+                        CLASS_MAPPING.values(),
                         probabilities[0].cpu().numpy()
                     )
                 })
