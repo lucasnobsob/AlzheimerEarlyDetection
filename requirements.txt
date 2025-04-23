@@ -21,3 +21,6 @@ Pillow==10.1.0
 
 # Utilitários
 python-dotenv==1.0.0
+
+# Adicionando pydantic
+pydantic==2.5.2
