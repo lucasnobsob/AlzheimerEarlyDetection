@@ -1,0 +1,34 @@
+from pydantic import BaseModel
+
+class PatientData(BaseModel):
+    Age: int
+    Gender: int
+    Ethnicity: int
+    EducationLevel: int
+    BMI: float
+    Smoking: int
+    AlcoholConsumption: float
+    PhysicalActivity: float
+    DietQuality: float
+    SleepQuality: float
+    FamilyHistoryAlzheimers: int
+    CardiovascularDisease: int
+    Diabetes: int
+    Depression: int
+    HeadInjury: int
+    Hypertension: int
+    SystolicBP: int
+    DiastolicBP: int
+    CholesterolTotal: float
+    CholesterolLDL: float
+    CholesterolHDL: float
+    CholesterolTriglycerides: float
+    FunctionalAssessment: float
+    MemoryComplaints: int
+    BehavioralProblems: int
+    ADL: float
+    Confusion: int
+    Disorientation: int
+    PersonalityChanges: int
+    DifficultyCompletingTasks: int
+    Forgetfulness: int
