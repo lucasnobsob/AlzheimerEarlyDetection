@@ -8,6 +8,7 @@ from typing import List
 import logging
 import torch
 import uvicorn
+import json
 from models.Helper import format_probabilities, preprocess_image
 from models.PredictionResponse import PredictionResponse
 from models.AlzheimerCNN import AlzheimerCNN
@@ -31,19 +32,16 @@ app.add_middleware(
 
 model_csv = joblib.load('models/XGBoost.joblib')
 
-# Load the model
+# Load the model and class mapping
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = AlzheimerCNN(num_classes=4)
 model.load_state_dict(torch.load('models/alzheimer_mri_model.pth', map_location=device))
 model = model.to(device)
 model.eval()
 
-CLASS_MAPPING = {
-    0: "Sem Demência",
-    1: "Demência Muito Leve",
-    2: "Demência Leve",
-    3: "Demência Moderada"
-}
+# Load CLASS_MAPPING from JSON
+with open('models/class_mapping.json', 'r') as f:
+    CLASS_MAPPING = json.load(f)
 
 @app.get("/")
 async def root():
@@ -68,7 +66,7 @@ async def predict(file: UploadFile = File(...)):
         
         # Prepare response
         result = {
-            "predicted_class": CLASS_MAPPING[predicted_class],
+            "predicted_class": CLASS_MAPPING[str(predicted_class)],
             "confidence": f"{float(confidence)*100:.2f}%",
             "probabilities": format_probabilities({
                 class_name: prob for class_name, prob in zip(
@@ -106,7 +104,7 @@ async def batch_predict(files: List[UploadFile] = File(...)):
             # Prepare result for this image
             result = {
                 "filename": file.filename,
-                "predicted_class": CLASS_MAPPING[predicted_class],
+                "predicted_class": CLASS_MAPPING[str(predicted_class)],
                 "confidence": f"{float(confidence)*100:.2f}%",
                 "probabilities": format_probabilities({
                     class_name: prob for class_name, prob in zip(
@@ -134,10 +132,10 @@ async def predict_dementia_batch(patients_data: List[PatientData]):
         
         results = []
         for i, (pred, probs) in enumerate(zip(predictions, probabilities)):
-            stage_name = CLASS_MAPPING.get(int(pred), "Unknown")
+            stage_name = CLASS_MAPPING.get(str(int(pred)), "Unknown")
             stage_probability = probs[np.where(model_csv.classes_ == pred)[0][0]]
             
-            all_probs = {CLASS_MAPPING.get(int(cls), "Unknown"): float(prob) 
+            all_probs = {CLASS_MAPPING.get(str(int(cls)), "Unknown"): float(prob) 
                         for cls, prob in zip(model_csv.classes_, probs)}
             
             results.append({
@@ -154,4 +152,4 @@ async def predict_dementia_batch(patients_data: List[PatientData]):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
