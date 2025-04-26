@@ -4,5 +4,5 @@ from pydantic import BaseModel
 
 class PredictionResponse(BaseModel):
     stage: str
-    probability: float
-    all_probabilities: Dict[str, float]
+    probability: str
+    all_probabilities: Dict[str, str]
