@@ -164,7 +164,7 @@ async def batch_predict(files: List[UploadFile] = File(...)):
             
             results.append(result)
         
-        return {"results": results}
+        return results
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
