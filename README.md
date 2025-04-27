@@ -1,96 +1,100 @@
-# Detecção Precoce de Alzheimer
+# Alzheimer Early Detection
 
-Este projeto tem como objetivo desenvolver um sistema de detecção precoce da doença de Alzheimer utilizando técnicas de aprendizado de máquina e processamento de imagens médicas.
+Projeto para detecção precoce de Alzheimer utilizando Machine Learning e API em Python.
+A aplicação disponibiliza endpoints para realizar inferências baseadas em dados clínicos e demográficos.
 
-## Estrutura do Projeto
+---
+
+## 🧀 Sobre o Projeto
+
+Este projeto tem como objetivo auxiliar no diagnóstico precoce da Doença de Alzheimer a partir da análise de variáveis cognitivas e de exames clínicos.
+O sistema é dividido em duas partes:
+
+- **Modelo de Machine Learning** treinado para prever o nível de comprometimento cognitivo.
+- **API REST** desenvolvida em Python (FastAPI) para disponibilizar o modelo de forma acessível.
+
+---
+
+## 📂 Estrutura do Repositório
 
 ```
 AlzheimerEarlyDetection/
-├── data/                    # Dados e imagens médicas
-├── notebooks/               # Jupyter notebooks para análise e experimentação
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_feature_engineering.ipynb
-│   ├── 04_model_training.ipynb
-│   ├── 05_model_evaluation.ipynb
-│   └── 06_visualization.ipynb
-├── src/                     # Código fonte do projeto
-│   ├── data/               # Scripts de processamento de dados
-│   ├── models/             # Implementações dos modelos
-│   ├── utils/              # Funções utilitárias
-│   └── visualization/      # Scripts de visualização
-├── tests/                  # Testes unitários
-├── requirements.txt        # Dependências do projeto
-└── README.md              # Este arquivo
+│
+├── api/                  # Código da API (FastAPI)
+├── model/                # Modelos treinados e utilitários
+├── data/                 # Dataset utilizado
+├── Dockerfile            # Dockerfile para criar a imagem da aplicação
+├── docker-compose.yml    # Orquestração (não obrigatória para uso final)
+├── README.md             # Este arquivo
+└── requirements.txt      # Dependências da aplicação
 ```
 
-## Requisitos
+---
 
-- Python 3.8+
-- Bibliotecas listadas em `requirements.txt`
+## 🚀 Como Executar o Projeto
 
-## Instalação
+Você pode executar a aplicação rapidamente utilizando o **Docker Hub**, sem precisar clonar o repositório.
 
-1. Clone o repositório:
+### 1. Baixar a imagem Docker
 
 ```bash
-git clone [URL_DO_REPOSITÓRIO]
-cd AlzheimerEarlyDetection
+docker pull lucassobdocker/alzheimer-api
 ```
 
-2. Crie um ambiente virtual e ative-o:
+### 2. Criar e iniciar o container
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
+docker run -d -p 8000:8000 --name alzheimer-api lucassobdocker/alzheimer-api
 ```
 
-3. Instale as dependências:
+- O parâmetro `-p 8000:8000` expõe a API na porta 8000 da sua máquina local.
+- A API ficará disponível em: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
+
+### 3. Parar e remover o container (se necessário)
 
 ```bash
-pip install -r requirements.txt
+docker stop alzheimer-api
+docker rm alzheimer-api
 ```
 
-## Uso
+---
 
-1. **Exploração de Dados**
+## 📚 Documentação da API
 
-   - Execute o notebook `01_data_exploration.ipynb` para análise inicial dos dados
+Após o container estar rodando, acesse a documentação automática via Swagger:
 
-2. **Pré-processamento**
+🔗 [http://localhost:8000/docs](http://localhost:8000/docs)
 
-   - Use `02_preprocessing.ipynb` para preparar os dados
+Lá você poderá testar os endpoints, enviar dados e visualizar as respostas do modelo.
 
-3. **Engenharia de Features**
+---
 
-   - Execute `03_feature_engineering.ipynb` para extração de características
+## 🛠️ Tecnologias Utilizadas
 
-4. **Treinamento do Modelo**
+- **Python 3.11**
+- **FastAPI**
+- **Scikit-learn**
+- **Pandas**
+- **Docker**
+- **Docker Hub**
 
-   - Use `04_model_training.ipynb` para treinar os modelos
+---
 
-5. **Avaliação**
+## 🤝 Contribuições
 
-   - Execute `05_model_evaluation.ipynb` para avaliar o desempenho
+Contribuições são bem-vindas!
+Se você quiser propor melhorias, abrir issues ou enviar pull requests, fique à vontade.
 
-6. **Visualização**
-   - Use `06_visualization.ipynb` para gerar visualizações e insights
+---
 
-## Contribuição
+## 📄 Licença
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+Este projeto está licenciado sob a licença MIT.
+Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-## Licença
+---
 
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+## 📬 Contato
 
-## Contato
-
-[Seu Nome] - [seu.email@exemplo.com]
-
-Link do Projeto: [https://github.com/seu-usuario/AlzheimerEarlyDetection](https://github.com/seu-usuario/AlzheimerEarlyDetection)
+Lucas Nóbrega Sobral — [LinkedIn](https://www.linkedin.com/in/lucas-sobrinho/)
+lucas.ns.93@hotmail.com
